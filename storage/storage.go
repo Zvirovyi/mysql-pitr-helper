@@ -9,9 +9,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/bloberror"
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/pkg/errors"
@@ -186,73 +183,24 @@ func (s *S3) DeleteObject(ctx context.Context, objectName string) error {
 
 // Azure is a type for working with Azure Blob storages
 type Azure struct {
-	client    *azblob.Client // azure client for work with storage
 	container string
 	prefix    string
 }
 
 func NewAzure(storageAccount, accessKey, endpoint, container, prefix string) (Storage, error) {
-	credential, err := azblob.NewSharedKeyCredential(storageAccount, accessKey)
-	if err != nil {
-		return nil, errors.Wrap(err, "new credentials")
-	}
-	if endpoint == "" {
-		endpoint = fmt.Sprintf("https://%s.blob.core.windows.net/", storageAccount)
-	}
-	cli, err := azblob.NewClientWithSharedKeyCredential(endpoint, credential, nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "new client")
-	}
-
-	return &Azure{
-		client:    cli,
-		container: container,
-		prefix:    prefix,
-	}, nil
+	panic("azure not implemented")
 }
 
 func (a *Azure) GetObject(ctx context.Context, name string) (io.ReadCloser, error) {
-	objPath := path.Join(a.prefix, name)
-	resp, err := a.client.DownloadStream(ctx, a.container, objPath, &azblob.DownloadStreamOptions{})
-	if err != nil {
-		if bloberror.HasCode(errors.Cause(err), bloberror.BlobNotFound) {
-			return nil, ErrObjectNotFound
-		}
-		return nil, errors.Wrapf(err, "download stream: %s", objPath)
-	}
-	return resp.Body, nil
+	panic("azure not implemented")
 }
 
 func (a *Azure) PutObject(ctx context.Context, name string, data io.Reader, _ int64) error {
-	objPath := path.Join(a.prefix, name)
-	_, err := a.client.UploadStream(ctx, a.container, objPath, data, nil)
-	if err != nil {
-		return errors.Wrapf(err, "upload stream: %s", objPath)
-	}
-	return nil
+	panic("azure not implemented")
 }
 
 func (a *Azure) ListObjects(ctx context.Context, prefix string) ([]string, error) {
-	listPrefix := path.Join(a.prefix, prefix)
-	pg := a.client.NewListBlobsFlatPager(a.container, &container.ListBlobsFlatOptions{
-		Prefix: &listPrefix,
-	})
-	var blobs []string
-	for pg.More() {
-		resp, err := pg.NextPage(ctx)
-		if err != nil {
-			return nil, errors.Wrapf(err, "next page: %s", prefix)
-		}
-		if resp.Segment != nil {
-			for _, item := range resp.Segment.BlobItems {
-				if item != nil && item.Name != nil {
-					name := strings.TrimPrefix(*item.Name, a.prefix)
-					blobs = append(blobs, name)
-				}
-			}
-		}
-	}
-	return blobs, nil
+	panic("azure not implemented")
 }
 
 func (a *Azure) SetPrefix(prefix string) {
@@ -264,13 +212,5 @@ func (a *Azure) GetPrefix() string {
 }
 
 func (a *Azure) DeleteObject(ctx context.Context, objectName string) error {
-	objPath := path.Join(a.prefix, objectName)
-	_, err := a.client.DeleteBlob(ctx, a.container, objPath, nil)
-	if err != nil {
-		if bloberror.HasCode(errors.Cause(err), bloberror.BlobNotFound) {
-			return ErrObjectNotFound
-		}
-		return errors.Wrapf(err, "delete blob %s", objPath)
-	}
-	return nil
+	panic("azure not implemented")
 }
